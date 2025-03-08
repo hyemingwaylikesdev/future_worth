@@ -105,7 +105,7 @@ export default function HomePage() {
             rel='noopener noreferrer'>
             <Image
               aria-hidden
-              src='/github.svg'
+              src='/icons/github.svg'
               alt='GitHub 아이콘'
               width={16}
               height={16}
