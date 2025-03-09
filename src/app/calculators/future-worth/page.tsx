@@ -15,6 +15,27 @@ const removeCommas = (str: string): string => {
   return str.replace(/,/g, '');
 };
 
+// 숫자를 한글 단위로 변환하는 함수
+const formatKoreanNumber = (num: number): string => {
+  if (num === 0) return '0원';
+
+  const units = ['', '만', '억', '조', '경'];
+  let result = '';
+  let unitIndex = 0;
+  let tempNum = num;
+
+  while (tempNum > 0) {
+    const remainder = tempNum % 10000;
+    if (remainder > 0) {
+      result = `${remainder}${units[unitIndex]} ${result}`;
+    }
+    tempNum = Math.floor(tempNum / 10000);
+    unitIndex++;
+  }
+
+  return result.trim() + '원';
+};
+
 export default function FutureWorthCalculator() {
   const [initialInvestment, setInitialInvestment] = useState<number>(1000);
   const [initialInvestmentFormatted, setInitialInvestmentFormatted] =
@@ -102,6 +123,11 @@ export default function FutureWorthCalculator() {
                   onChange={handleInitialInvestmentChange}
                   min='0'
                 />
+                {initialInvestment > 0 && (
+                  <div className={styles.koreanAmount}>
+                    {formatKoreanNumber(initialInvestment)}
+                  </div>
+                )}
               </div>
 
               <div className={styles.inputGroup}>
@@ -113,6 +139,11 @@ export default function FutureWorthCalculator() {
                   onChange={handleMonthlyContributionChange}
                   min='0'
                 />
+                {monthlyContribution > 0 && (
+                  <div className={styles.koreanAmount}>
+                    {formatKoreanNumber(monthlyContribution)}
+                  </div>
+                )}
               </div>
 
               <div className={styles.inputGroup}>
@@ -161,16 +192,27 @@ export default function FutureWorthCalculator() {
                 <h2>예상 미래 자산 가치</h2>
                 <div className={styles.resultValue}>
                   {result.toLocaleString()} 원
+                  <div className={styles.koreanResultAmount}>
+                    {formatKoreanNumber(result)}
+                  </div>
                 </div>
                 <div className={styles.resultDetails}>
                   <div className={styles.detailItem}>
                     <span>초기 투자금:</span>
-                    <span>{initialInvestment.toLocaleString()} 원</span>
+                    <span>
+                      {initialInvestment.toLocaleString()} 원
+                      <div className={styles.koreanDetailAmount}>
+                        {formatKoreanNumber(initialInvestment)}
+                      </div>
+                    </span>
                   </div>
                   <div className={styles.detailItem}>
                     <span>총 적립금:</span>
                     <span>
                       {(monthlyContribution * years * 12).toLocaleString()} 원
+                      <div className={styles.koreanDetailAmount}>
+                        {formatKoreanNumber(monthlyContribution * years * 12)}
+                      </div>
                     </span>
                   </div>
                   <div className={styles.detailItem}>
@@ -182,11 +224,25 @@ export default function FutureWorthCalculator() {
                         monthlyContribution * years * 12
                       ).toLocaleString()}{' '}
                       원
+                      <div className={styles.koreanDetailAmount}>
+                        {formatKoreanNumber(
+                          result -
+                            initialInvestment -
+                            monthlyContribution * years * 12
+                        )}
+                      </div>
                     </span>
                   </div>
                   <div className={styles.detailItem}>
                     <span>인플레이션 고려 실질 가치:</span>
-                    <span>{realValueResult?.toLocaleString()} 원</span>
+                    <span>
+                      {realValueResult?.toLocaleString()} 원
+                      <div className={styles.koreanDetailAmount}>
+                        {realValueResult
+                          ? formatKoreanNumber(realValueResult)
+                          : ''}
+                      </div>
+                    </span>
                   </div>
                   <div className={styles.detailItem}>
                     <span>실질 구매력 감소:</span>
@@ -197,6 +253,9 @@ export default function FutureWorthCalculator() {
                         100
                       ).toFixed(1)}
                       %)
+                      <div className={styles.koreanDetailAmount}>
+                        {formatKoreanNumber(result - (realValueResult ?? 0))}
+                      </div>
                     </span>
                   </div>
                 </div>

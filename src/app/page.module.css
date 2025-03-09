@@ -431,3 +431,30 @@
     color: #aaa;
   }
 }
+
+/* 한글 금액 표시 스타일 */
+.koreanAmount {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+.koreanResultAmount {
+  font-size: 1.2rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.koreanDetailAmount {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .koreanAmount,
+  .koreanResultAmount,
+  .koreanDetailAmount {
+    color: #aaa;
+  }
+}
