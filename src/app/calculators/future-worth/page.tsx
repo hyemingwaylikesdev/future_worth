@@ -1,16 +1,62 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import styles from '../../page.module.css';
 import Header from '../../../components/Header';
 
+// 숫자에 콤마 추가하는 함수
+const formatNumber = (num: number): string => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
+// 콤마 제거하는 함수
+const removeCommas = (str: string): string => {
+  return str.replace(/,/g, '');
+};
+
 export default function FutureWorthCalculator() {
   const [initialInvestment, setInitialInvestment] = useState<number>(1000);
+  const [initialInvestmentFormatted, setInitialInvestmentFormatted] =
+    useState<string>('1,000');
   const [monthlyContribution, setMonthlyContribution] = useState<number>(100);
+  const [monthlyContributionFormatted, setMonthlyContributionFormatted] =
+    useState<string>('100');
   const [annualReturn, setAnnualReturn] = useState<number>(7);
+  const [inflation, setInflation] = useState<number>(2);
   const [years, setYears] = useState<number>(10);
   const [result, setResult] = useState<number | null>(null);
+  const [realValueResult, setRealValueResult] = useState<number | null>(null);
+
+  // 초기 투자금 입력값 포맷팅
+  const handleInitialInvestmentChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = removeCommas(e.target.value);
+    if (value === '') {
+      setInitialInvestment(0);
+      setInitialInvestmentFormatted('');
+    } else {
+      const numValue = Number(value);
+      setInitialInvestment(numValue);
+      setInitialInvestmentFormatted(formatNumber(numValue));
+    }
+  };
+
+  // 월 적립금 입력값 포맷팅
+  const handleMonthlyContributionChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = removeCommas(e.target.value);
+    if (value === '') {
+      setMonthlyContribution(0);
+      setMonthlyContributionFormatted('');
+    } else {
+      const numValue = Number(value);
+      setMonthlyContribution(numValue);
+      setMonthlyContributionFormatted(formatNumber(numValue));
+    }
+  };
 
   const calculateFutureWorth = () => {
     // 초기 투자금의 미래 가치
@@ -24,9 +70,13 @@ export default function FutureWorthCalculator() {
       monthlyContribution *
       ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
 
-    // 총 미래 가치
+    // 총 미래 가치 (명목 가치)
     const totalFutureValue = initialFutureValue + contributionFutureValue;
     setResult(Math.round(totalFutureValue));
+
+    // 인플레이션을 고려한 실질 가치 계산
+    const realValue = totalFutureValue / Math.pow(1 + inflation / 100, years);
+    setRealValueResult(Math.round(realValue));
   };
 
   return (
@@ -47,9 +97,9 @@ export default function FutureWorthCalculator() {
                 <label htmlFor='initialInvestment'>초기 투자금액 (원)</label>
                 <input
                   id='initialInvestment'
-                  type='number'
-                  value={initialInvestment}
-                  onChange={(e) => setInitialInvestment(Number(e.target.value))}
+                  type='text'
+                  value={initialInvestmentFormatted}
+                  onChange={handleInitialInvestmentChange}
                   min='0'
                 />
               </div>
@@ -58,11 +108,9 @@ export default function FutureWorthCalculator() {
                 <label htmlFor='monthlyContribution'>월 적립금액 (원)</label>
                 <input
                   id='monthlyContribution'
-                  type='number'
-                  value={monthlyContribution}
-                  onChange={(e) =>
-                    setMonthlyContribution(Number(e.target.value))
-                  }
+                  type='text'
+                  value={monthlyContributionFormatted}
+                  onChange={handleMonthlyContributionChange}
                   min='0'
                 />
               </div>
@@ -74,6 +122,17 @@ export default function FutureWorthCalculator() {
                   type='number'
                   value={annualReturn}
                   onChange={(e) => setAnnualReturn(Number(e.target.value))}
+                  step='0.1'
+                />
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label htmlFor='inflation'>연간 예상 물가상승률 (%)</label>
+                <input
+                  id='inflation'
+                  type='number'
+                  value={inflation}
+                  onChange={(e) => setInflation(Number(e.target.value))}
                   step='0.1'
                 />
               </div>
@@ -123,6 +182,21 @@ export default function FutureWorthCalculator() {
                         monthlyContribution * years * 12
                       ).toLocaleString()}{' '}
                       원
+                    </span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span>인플레이션 고려 실질 가치:</span>
+                    <span>{realValueResult?.toLocaleString()} 원</span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span>실질 구매력 감소:</span>
+                    <span>
+                      {(result - (realValueResult ?? 0)).toLocaleString()} 원 (
+                      {(
+                        ((result - (realValueResult ?? 0)) / result) *
+                        100
+                      ).toFixed(1)}
+                      %)
                     </span>
                   </div>
                 </div>
