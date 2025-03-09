@@ -114,35 +114,180 @@
 
 .resultCard h2 {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   color: #333;
+  font-size: 1.5rem;
 }
 
 .resultValue {
   font-size: 2.5rem;
   font-weight: 700;
   text-align: center;
-  margin-bottom: 1.5rem;
   color: #2d2d2d;
+  margin-bottom: 0.25rem;
 }
 
-.resultDetails {
-  border-top: 1px solid #eee;
-  padding-top: 1.5rem;
+.koreanResultAmount {
+  font-size: 1.2rem;
+  color: #666;
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
-.detailItem {
+.resultSummary {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.detailItem span:first-child {
+.summaryItem {
+  flex: 1;
+  text-align: center;
+  background-color: #f9f9f9;
+  padding: 1.25rem 1rem;
+  border-radius: 8px;
+}
+
+.summaryValue {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.summaryLabel {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.resultDivider {
+  height: 1px;
+  background-color: #eee;
+  margin: 1.5rem 0;
+}
+
+.inflationSection {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.inflationTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.inflationDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.inflationItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.inflationLabel {
+  font-size: 0.95rem;
   color: #666;
 }
 
-.detailItem span:last-child {
+.inflationValue {
+  font-size: 1rem;
   font-weight: 500;
+  color: #333;
+  text-align: right;
+}
+
+.percentageValue {
+  font-size: 0.9rem;
+  color: #e53e3e;
+  margin-left: 0.5rem;
+}
+
+.koreanDetailAmount {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .resultSummary {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .inflationItem {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .inflationValue {
+    text-align: left;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .resultCard {
+    background-color: #2d2d2d;
+  }
+
+  .resultCard h2 {
+    color: #f0f0f0;
+  }
+
+  .resultValue {
+    color: #f0f0f0;
+  }
+
+  .summaryItem {
+    background-color: #3d3d3d;
+  }
+
+  .summaryValue {
+    color: #f0f0f0;
+  }
+
+  .summaryLabel {
+    color: #aaa;
+  }
+
+  .resultDivider {
+    background-color: #444;
+  }
+
+  .inflationSection {
+    background-color: #3d3d3d;
+  }
+
+  .inflationTitle {
+    color: #f0f0f0;
+  }
+
+  .inflationLabel {
+    color: #aaa;
+  }
+
+  .inflationValue {
+    color: #f0f0f0;
+  }
+
+  .percentageValue {
+    color: #fc8181;
+  }
+
+  .koreanAmount,
+  .koreanResultAmount,
+  .koreanDetailAmount {
+    color: #aaa;
+  }
 }
 
 .ctas {
@@ -432,6 +577,19 @@
   }
 }
 
+/* 오류 메시지 스타일 */
+.errorMessage {
+  color: #e53e3e;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .errorMessage {
+    color: #fc8181;
+  }
+}
+
 /* 한글 금액 표시 스타일 */
 .koreanAmount {
   font-size: 0.85rem;
@@ -439,22 +597,8 @@
   margin-top: 0.25rem;
 }
 
-.koreanResultAmount {
-  font-size: 1.2rem;
-  color: #666;
-  margin-top: 0.5rem;
-}
-
-.koreanDetailAmount {
-  font-size: 0.85rem;
-  color: #666;
-  margin-top: 0.25rem;
-}
-
 @media (prefers-color-scheme: dark) {
-  .koreanAmount,
-  .koreanResultAmount,
-  .koreanDetailAmount {
+  .koreanAmount {
     color: #aaa;
   }
 }
