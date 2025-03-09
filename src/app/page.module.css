@@ -602,3 +602,17 @@
     color: #aaa;
   }
 }
+
+/* 안내 텍스트 스타일 */
+.noteText {
+  font-size: 0.85rem;
+  color: #666;
+  margin: -0.5rem 0 1.5rem;
+  font-style: italic;
+}
+
+@media (prefers-color-scheme: dark) {
+  .noteText {
+    color: #aaa;
+  }
+}

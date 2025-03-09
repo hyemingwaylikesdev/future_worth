@@ -4,37 +4,9 @@ import { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import styles from '../../page.module.css';
 import Header from '../../../components/Header';
-
-// 숫자에 콤마 추가하는 함수
-const formatNumber = (num: number): string => {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-};
-
-// 콤마 제거하는 함수
-const removeCommas = (str: string): string => {
-  return str.replace(/,/g, '');
-};
-
-// 숫자를 한글 단위로 변환하는 함수
-const formatKoreanNumber = (num: number): string => {
-  if (num === 0) return '0원';
-
-  const units = ['', '만', '억', '조', '경'];
-  let result = '';
-  let unitIndex = 0;
-  let tempNum = num;
-
-  while (tempNum > 0) {
-    const remainder = tempNum % 10000;
-    if (remainder > 0) {
-      result = `${remainder}${units[unitIndex]} ${result}`;
-    }
-    tempNum = Math.floor(tempNum / 10000);
-    unitIndex++;
-  }
-
-  return result.trim() + '원';
-};
+import FormattedInput from '../../../components/FormattedInput';
+import ResultCard from '../../../components/ResultCard';
+import { formatNumber, removeCommas } from '../../../utils/formatters';
 
 // 폼 입력 타입 정의
 type FormInputs = {
@@ -51,6 +23,7 @@ export default function FutureWorthCalculator() {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<FormInputs>({
     defaultValues: {
@@ -171,6 +144,17 @@ export default function FutureWorthCalculator() {
     setRealValueResult(Math.round(realValue));
   };
 
+  // 총 적립금 계산
+  const totalContribution = monthlyContribution * years * 12;
+
+  // 총 투자 수익 계산
+  const totalProfit =
+    result !== null ? result - initialInvestment - totalContribution : 0;
+
+  // 인플레이션으로 인한 구매력 감소
+  const inflationLoss =
+    result !== null && realValueResult !== null ? result - realValueResult : 0;
+
   return (
     <>
       <Header />
@@ -187,123 +171,96 @@ export default function FutureWorthCalculator() {
             <form
               onSubmit={handleSubmit(onSubmit)}
               className={styles.calculatorCard}>
-              <div className={styles.inputGroup}>
-                <label htmlFor='initialInvestment'>초기 투자금액 (원)</label>
-                <input
-                  id='initialInvestment'
-                  type='text'
-                  {...register('initialInvestment', {
-                    required: '초기 투자금액을 입력해주세요',
-                    validate: (value) =>
-                      removeCommas(value) !== '0' ||
-                      '0보다 큰 금액을 입력해주세요',
-                  })}
-                  onChange={handleInitialInvestmentChange}
-                  min='0'
-                />
-                {initialInvestment > 0 && (
-                  <div className={styles.koreanAmount}>
-                    {formatKoreanNumber(initialInvestment)}
-                  </div>
-                )}
-                {errors.initialInvestment && (
-                  <div className={styles.errorMessage}>
-                    {errors.initialInvestment.message}
-                  </div>
-                )}
-              </div>
+              <FormattedInput
+                id='initialInvestment'
+                label='초기 투자금액 (원)'
+                numericValue={initialInvestment}
+                onChange={handleInitialInvestmentChange}
+                register={register}
+                name='initialInvestment'
+                validation={{
+                  required: '초기 투자금액을 입력해주세요',
+                  validate: (value) =>
+                    removeCommas(value) !== '0' ||
+                    '0보다 큰 금액을 입력해주세요',
+                }}
+                error={errors.initialInvestment}
+                min='0'
+              />
 
-              <div className={styles.inputGroup}>
-                <label htmlFor='monthlyContribution'>월 적립금액 (원)</label>
-                <input
-                  id='monthlyContribution'
-                  type='text'
-                  {...register('monthlyContribution', {
-                    required: '월 적립금액을 입력해주세요',
-                  })}
-                  onChange={handleMonthlyContributionChange}
-                  min='0'
-                />
-                {monthlyContribution > 0 && (
-                  <div className={styles.koreanAmount}>
-                    {formatKoreanNumber(monthlyContribution)}
-                  </div>
-                )}
-                {errors.monthlyContribution && (
-                  <div className={styles.errorMessage}>
-                    {errors.monthlyContribution.message}
-                  </div>
-                )}
-              </div>
+              <FormattedInput
+                id='monthlyContribution'
+                label='월 적립금액 (원)'
+                numericValue={monthlyContribution}
+                onChange={handleMonthlyContributionChange}
+                register={register}
+                name='monthlyContribution'
+                validation={{
+                  required: '월 적립금액을 입력해주세요',
+                }}
+                error={errors.monthlyContribution}
+                min='0'
+              />
 
-              <div className={styles.inputGroup}>
-                <label htmlFor='annualReturn'>연간 예상 수익률 (%)</label>
-                <input
-                  id='annualReturn'
-                  type='text'
-                  {...register('annualReturn', {
-                    required: '연간 예상 수익률을 입력해주세요',
-                    validate: {
-                      isNumber: (value) =>
-                        !isNaN(Number(value)) || '유효한 숫자를 입력해주세요',
-                      isValid: (value) =>
-                        Number(value) >= 0 || '0 이상의 값을 입력해주세요',
-                    },
-                  })}
-                  onChange={handleAnnualReturnChange}
-                  step='0.1'
-                />
-                {errors.annualReturn && (
-                  <div className={styles.errorMessage}>
-                    {errors.annualReturn.message}
-                  </div>
-                )}
-              </div>
+              <FormattedInput
+                id='annualReturn'
+                label='연간 예상 수익률 (%)'
+                numericValue={annualReturn}
+                onChange={handleAnnualReturnChange}
+                register={register}
+                name='annualReturn'
+                validation={{
+                  required: '연간 예상 수익률을 입력해주세요',
+                  validate: {
+                    isNumber: (value) =>
+                      !isNaN(Number(value)) || '유효한 숫자를 입력해주세요',
+                    isValid: (value) =>
+                      Number(value) >= 0 || '0 이상의 값을 입력해주세요',
+                  },
+                }}
+                error={errors.annualReturn}
+                step='0.1'
+                showKorean={false}
+              />
 
-              <div className={styles.inputGroup}>
-                <label htmlFor='inflation'>연간 예상 물가상승률 (%)</label>
-                <input
-                  id='inflation'
-                  type='text'
-                  {...register('inflation', {
-                    required: '연간 예상 물가상승률을 입력해주세요',
-                    validate: {
-                      isNumber: (value) =>
-                        !isNaN(Number(value)) || '유효한 숫자를 입력해주세요',
-                      isValid: (value) =>
-                        Number(value) >= 0 || '0 이상의 값을 입력해주세요',
-                    },
-                  })}
-                  onChange={handleInflationChange}
-                  step='0.1'
-                />
-                {errors.inflation && (
-                  <div className={styles.errorMessage}>
-                    {errors.inflation.message}
-                  </div>
-                )}
-              </div>
+              <FormattedInput
+                id='inflation'
+                label='연간 예상 물가상승률 (%)'
+                numericValue={inflation}
+                onChange={handleInflationChange}
+                register={register}
+                name='inflation'
+                validation={{
+                  required: '연간 예상 물가상승률을 입력해주세요',
+                  validate: {
+                    isNumber: (value) =>
+                      !isNaN(Number(value)) || '유효한 숫자를 입력해주세요',
+                    isValid: (value) =>
+                      Number(value) >= 0 || '0 이상의 값을 입력해주세요',
+                  },
+                }}
+                error={errors.inflation}
+                step='0.1'
+                showKorean={false}
+              />
 
-              <div className={styles.inputGroup}>
-                <label htmlFor='years'>투자 기간 (년)</label>
-                <input
-                  id='years'
-                  type='text'
-                  {...register('years', {
-                    required: '투자 기간을 입력해주세요',
-                    validate: (value) =>
-                      Number(value) > 0 || '투자 기간은 0보다 커야 합니다',
-                  })}
-                  onChange={handleYearsChange}
-                  min='1'
-                  max='50'
-                />
-                {errors.years && (
-                  <div className={styles.errorMessage}>
-                    {errors.years.message}
-                  </div>
-                )}
-              </div>
+              <FormattedInput
+                id='years'
+                label='투자 기간 (년)'
+                numericValue={years}
+                onChange={handleYearsChange}
+                register={register}
+                name='years'
+                validation={{
+                  required: '투자 기간을 입력해주세요',
+                  validate: (value) =>
+                    Number(value) > 0 || '투자 기간은 0보다 커야 합니다',
+                }}
+                error={errors.years}
+                min='1'
+                max='50'
+                showKorean={false}
+              />
 
               <button type='submit' className={styles.calculateButton}>
                 계산하기
@@ -311,92 +268,15 @@ export default function FutureWorthCalculator() {
             </form>
 
             {result !== null && (
-              <div className={styles.resultCard}>
-                <h2>예상 미래 자산 가치</h2>
-                <div className={styles.resultValue}>
-                  {result.toLocaleString()} 원
-                </div>
-                <div className={styles.koreanResultAmount}>
-                  {formatKoreanNumber(result)}
-                </div>
-
-                <div className={styles.resultSummary}>
-                  <div className={styles.summaryItem}>
-                    <div className={styles.summaryValue}>
-                      {initialInvestment.toLocaleString()} 원
-                    </div>
-                    <div className={styles.summaryLabel}>초기 투자금</div>
-                    <div className={styles.koreanDetailAmount}>
-                      {formatKoreanNumber(initialInvestment)}
-                    </div>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <div className={styles.summaryValue}>
-                      {(monthlyContribution * years * 12).toLocaleString()} 원
-                    </div>
-                    <div className={styles.summaryLabel}>총 적립금</div>
-                    <div className={styles.koreanDetailAmount}>
-                      {formatKoreanNumber(monthlyContribution * years * 12)}
-                    </div>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <div className={styles.summaryValue}>
-                      {(
-                        result -
-                        initialInvestment -
-                        monthlyContribution * years * 12
-                      ).toLocaleString()}{' '}
-                      원
-                    </div>
-                    <div className={styles.summaryLabel}>총 투자 수익</div>
-                    <div className={styles.koreanDetailAmount}>
-                      {formatKoreanNumber(
-                        result -
-                          initialInvestment -
-                          monthlyContribution * years * 12
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.resultDivider}></div>
-
-                <div className={styles.inflationSection}>
-                  <div className={styles.inflationTitle}>
-                    인플레이션 고려 시
-                  </div>
-                  <div className={styles.inflationDetails}>
-                    <div className={styles.inflationItem}>
-                      <div className={styles.inflationLabel}>실질 가치:</div>
-                      <div className={styles.inflationValue}>
-                        {realValueResult?.toLocaleString()} 원
-                        <div className={styles.koreanDetailAmount}>
-                          {realValueResult
-                            ? formatKoreanNumber(realValueResult)
-                            : ''}
-                        </div>
-                      </div>
-                    </div>
-                    <div className={styles.inflationItem}>
-                      <div className={styles.inflationLabel}>구매력 감소:</div>
-                      <div className={styles.inflationValue}>
-                        {(result - (realValueResult ?? 0)).toLocaleString()} 원
-                        <span className={styles.percentageValue}>
-                          (
-                          {(
-                            ((result - (realValueResult ?? 0)) / result) *
-                            100
-                          ).toFixed(1)}
-                          %)
-                        </span>
-                        <div className={styles.koreanDetailAmount}>
-                          {formatKoreanNumber(result - (realValueResult ?? 0))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ResultCard
+                title='예상 미래 자산 가치'
+                result={result}
+                initialInvestment={initialInvestment}
+                totalContribution={totalContribution}
+                totalProfit={totalProfit}
+                realValueResult={realValueResult}
+                inflationLoss={inflationLoss}
+              />
             )}
           </div>
         </main>
