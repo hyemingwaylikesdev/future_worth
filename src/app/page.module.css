@@ -616,3 +616,130 @@
     color: #aaa;
   }
 }
+
+/* 상환 계획 섹션 스타일 */
+.scheduleSection {
+  margin-top: 1.5rem;
+}
+
+.scheduleTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.scheduleTable {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1rem;
+}
+
+.scheduleHeader {
+  display: grid;
+  grid-template-columns: 0.5fr 1fr 1fr 1fr 1fr;
+  background-color: #f5f5f5;
+  font-weight: 600;
+  color: #333;
+}
+
+.scheduleHeaderCell {
+  padding: 0.75rem;
+  text-align: right;
+}
+
+.scheduleHeaderCell:first-child {
+  text-align: center;
+}
+
+.scheduleRow {
+  display: grid;
+  grid-template-columns: 0.5fr 1fr 1fr 1fr 1fr;
+  border-bottom: 1px solid #eee;
+}
+
+.scheduleRow:last-child {
+  border-bottom: none;
+}
+
+.scheduleCell {
+  padding: 0.75rem;
+  text-align: right;
+}
+
+.scheduleCell:first-child {
+  text-align: center;
+}
+
+.toggleButton {
+  display: block;
+  margin: 1rem auto;
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #666;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggleButton:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .scheduleHeader,
+  .scheduleRow {
+    grid-template-columns: 0.5fr 1fr 1fr 1fr 1fr;
+    font-size: 0.85rem;
+  }
+
+  .scheduleHeaderCell,
+  .scheduleCell {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .scheduleTable {
+    overflow-x: auto;
+  }
+
+  .scheduleHeader,
+  .scheduleRow {
+    min-width: 500px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .scheduleTitle {
+    color: #f0f0f0;
+  }
+
+  .scheduleHeader {
+    background-color: #3d3d3d;
+    color: #f0f0f0;
+  }
+
+  .scheduleHeaderCell {
+    color: #f0f0f0;
+  }
+
+  .scheduleRow {
+    border-bottom-color: #444;
+  }
+
+  .toggleButton {
+    border-color: #444;
+    color: #aaa;
+  }
+
+  .toggleButton:hover {
+    background-color: #3d3d3d;
+    color: #f0f0f0;
+  }
+}

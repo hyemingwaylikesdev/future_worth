@@ -25,8 +25,9 @@ export default function HomePage() {
     },
     {
       id: 'compound-interest',
-      title: '복리 이자 계산기',
-      description: '복리 이자로 증가하는 투자 가치를 계산합니다.',
+      title: '예금/적금 계산기',
+      description:
+        '예금(초기 금액)과 적금(월 적립금)을 입력하여 미래 가치를 계산합니다.',
       icon: '/icons/percentage.svg',
       path: '/calculators/compound-interest',
     },
