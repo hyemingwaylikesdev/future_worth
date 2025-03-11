@@ -5,7 +5,14 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import styles from '../../page.module.css';
 import Header from '../../../components/Header';
 import FormattedInput from '../../../components/FormattedInput';
+import PaymentSummary from '../../../components/PaymentSummary';
+import PaymentScheduleTable from '../../../components/PaymentScheduleTable';
 import { formatNumber, removeCommas } from '../../../utils/formatters';
+import {
+  calculateAmortizationSchedule,
+  calculatePaymentSummary,
+  PaymentScheduleItem,
+} from '../../../utils/calculators';
 
 // 폼 입력 타입 정의
 type FormInputs = {
@@ -14,15 +21,6 @@ type FormInputs = {
   loanTerm: string;
   paymentFrequency: string;
 };
-
-// 상환 계획 항목 타입
-interface PaymentScheduleItem {
-  period: number;
-  payment: number;
-  principal: number;
-  interest: number;
-  remainingBalance: number;
-}
 
 export default function LoanPaymentCalculator() {
   // React Hook Form 설정
@@ -54,7 +52,6 @@ export default function LoanPaymentCalculator() {
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentScheduleItem[]>(
     []
   );
-  const [showFullSchedule, setShowFullSchedule] = useState<boolean>(false);
 
   // 대출 금액 입력값 포맷팅
   const handleLoanAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,47 +103,6 @@ export default function LoanPaymentCalculator() {
     setValue('paymentFrequency', e.target.value);
   };
 
-  // 상환 계획 계산
-  const calculateAmortizationSchedule = (
-    principal: number,
-    annualRate: number,
-    termYears: number,
-    paymentsPerYear: number
-  ): PaymentScheduleItem[] => {
-    const schedule: PaymentScheduleItem[] = [];
-    const totalPayments = termYears * paymentsPerYear;
-    const periodicRate = annualRate / 100 / paymentsPerYear;
-
-    // 월 상환금 계산 (원리금균등상환 방식)
-    const payment =
-      (principal * (periodicRate * Math.pow(1 + periodicRate, totalPayments))) /
-      (Math.pow(1 + periodicRate, totalPayments) - 1);
-
-    let balance = principal;
-
-    for (let period = 1; period <= totalPayments; period++) {
-      // 이자 계산
-      const interestPayment = balance * periodicRate;
-      // 원금 계산
-      const principalPayment = payment - interestPayment;
-      // 잔액 계산
-      balance -= principalPayment;
-
-      // 마지막 납입 시 잔액 오차 보정
-      const adjustedBalance = period === totalPayments ? 0 : balance;
-
-      schedule.push({
-        period,
-        payment,
-        principal: principalPayment,
-        interest: interestPayment,
-        remainingBalance: adjustedBalance,
-      });
-    }
-
-    return schedule;
-  };
-
   // 폼 제출 처리
   const onSubmit: SubmitHandler<FormInputs> = (data) => {
     if (loanAmount <= 0 || interestRate <= 0 || loanTerm <= 0) {
@@ -162,24 +118,15 @@ export default function LoanPaymentCalculator() {
     );
 
     if (schedule.length > 0) {
-      // 월 상환금
-      setMonthlyPayment(Math.round(schedule[0].payment));
+      // 요약 정보 계산
+      const summary = calculatePaymentSummary(schedule, loanAmount);
 
-      // 총 상환액
-      const total = schedule.reduce((sum, item) => sum + item.payment, 0);
-      setTotalPayment(Math.round(total));
-
-      // 총 이자
-      setTotalInterest(Math.round(total - loanAmount));
-
-      // 상환 계획 저장
+      // 상태 업데이트
+      setMonthlyPayment(summary.monthlyPayment);
+      setTotalPayment(summary.totalPayment);
+      setTotalInterest(summary.totalInterest);
       setPaymentSchedule(schedule);
     }
-  };
-
-  // 상환 계획 표시 토글
-  const toggleScheduleDisplay = () => {
-    setShowFullSchedule(!showFullSchedule);
   };
 
   return (
@@ -231,7 +178,7 @@ export default function LoanPaymentCalculator() {
                     isNumber: (value) =>
                       !isNaN(Number(value)) || '유효한 숫자를 입력해주세요',
                     isValid: (value) =>
-                      Number(value) > 0 || '0보다 큰 값을 입력해주세요',
+                      Number(value) >= 0 || '0 이상의 값을 입력해주세요',
                   },
                 }}
                 error={errors.interestRate}
@@ -290,89 +237,21 @@ export default function LoanPaymentCalculator() {
                 <div className={styles.resultCard}>
                   <h2>대출 상환 정보</h2>
 
-                  <div className={styles.resultSummary}>
-                    <div className={styles.summaryItem}>
-                      <div className={styles.summaryValue}>
-                        {monthlyPayment.toLocaleString()} 원
-                      </div>
-                      <div className={styles.summaryLabel}>
-                        {paymentFrequency === 12
-                          ? '월'
-                          : paymentFrequency === 4
-                          ? '분기'
-                          : paymentFrequency === 2
-                          ? '반기'
-                          : '연'}{' '}
-                        상환금
-                      </div>
-                    </div>
-                    <div className={styles.summaryItem}>
-                      <div className={styles.summaryValue}>
-                        {totalPayment.toLocaleString()} 원
-                      </div>
-                      <div className={styles.summaryLabel}>총 상환액</div>
-                    </div>
-                    <div className={styles.summaryItem}>
-                      <div className={styles.summaryValue}>
-                        {totalInterest.toLocaleString()} 원
-                      </div>
-                      <div className={styles.summaryLabel}>총 이자</div>
-                    </div>
-                  </div>
+                  {/* 상환 요약 정보 */}
+                  <PaymentSummary
+                    monthlyPayment={monthlyPayment}
+                    totalPayment={totalPayment}
+                    totalInterest={totalInterest}
+                    paymentFrequency={paymentFrequency}
+                  />
 
                   <div className={styles.resultDivider}></div>
 
-                  <div className={styles.scheduleSection}>
-                    <h3 className={styles.scheduleTitle}>상환 계획</h3>
-
-                    <div className={styles.scheduleTable}>
-                      <div className={styles.scheduleHeader}>
-                        <div className={styles.scheduleHeaderCell}>회차</div>
-                        <div className={styles.scheduleHeaderCell}>상환금</div>
-                        <div className={styles.scheduleHeaderCell}>원금</div>
-                        <div className={styles.scheduleHeaderCell}>이자</div>
-                        <div className={styles.scheduleHeaderCell}>잔액</div>
-                      </div>
-
-                      {paymentSchedule
-                        .slice(
-                          0,
-                          showFullSchedule ? paymentSchedule.length : 12
-                        )
-                        .map((item) => (
-                          <div key={item.period} className={styles.scheduleRow}>
-                            <div className={styles.scheduleCell}>
-                              {item.period}
-                            </div>
-                            <div className={styles.scheduleCell}>
-                              {Math.round(item.payment).toLocaleString()}
-                            </div>
-                            <div className={styles.scheduleCell}>
-                              {Math.round(item.principal).toLocaleString()}
-                            </div>
-                            <div className={styles.scheduleCell}>
-                              {Math.round(item.interest).toLocaleString()}
-                            </div>
-                            <div className={styles.scheduleCell}>
-                              {Math.round(
-                                item.remainingBalance
-                              ).toLocaleString()}
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-
-                    {paymentSchedule.length > 12 && (
-                      <button
-                        className={styles.toggleButton}
-                        onClick={toggleScheduleDisplay}
-                        type='button'>
-                        {showFullSchedule
-                          ? '간략히 보기'
-                          : '전체 상환 계획 보기'}
-                      </button>
-                    )}
-                  </div>
+                  {/* 상환 계획 테이블 */}
+                  <PaymentScheduleTable
+                    schedule={paymentSchedule}
+                    paymentFrequency={paymentFrequency}
+                  />
                 </div>
               )}
           </div>
