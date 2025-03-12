@@ -743,3 +743,58 @@
     color: #f0f0f0;
   }
 }
+
+/* 퇴직 자금 계산기 스타일 */
+.retirementSummary {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.summaryRow:last-child {
+  margin-bottom: 0;
+}
+
+.summaryLabel {
+  font-weight: 500;
+  color: #555;
+}
+
+.summaryValue {
+  font-weight: 600;
+  color: #333;
+}
+
+.resultLabel {
+  text-align: center;
+  font-size: 1rem;
+  color: #666;
+  margin-top: 5px;
+  margin-bottom: 15px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .retirementSummary {
+    background-color: #1e1e1e;
+  }
+
+  .summaryLabel {
+    color: #aaa;
+  }
+
+  .summaryValue {
+    color: #ddd;
+  }
+
+  .resultLabel {
+    color: #aaa;
+  }
+}
