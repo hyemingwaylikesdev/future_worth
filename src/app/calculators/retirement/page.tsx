@@ -6,7 +6,12 @@ import styles from '../../page.module.css';
 import Header from '../../../components/Header';
 import FormattedInput from '../../../components/FormattedInput';
 import ResultCard from '../../../components/ResultCard';
+import RetirementSummary from '../../../components/RetirementSummary';
 import { formatNumber, removeCommas } from '../../../utils/formatters';
+import {
+  calculateRetirementFunds,
+  RetirementCalculationResult,
+} from '../../../utils/retirement-calculator';
 
 // 폼 입력 타입 정의
 type FormInputs = {
@@ -53,14 +58,8 @@ export default function RetirementCalculator() {
   const [inflation, setInflation] = useState<number>(2);
 
   // 결과 상태
-  const [requiredSavings, setRequiredSavings] = useState<number | null>(null);
-  const [requiredMonthlySavings, setRequiredMonthlySavings] = useState<
-    number | null
-  >(null);
-  const [retirementFund, setRetirementFund] = useState<number | null>(null);
-  const [realValueRetirementFund, setRealValueRetirementFund] = useState<
-    number | null
-  >(null);
+  const [calculationResult, setCalculationResult] =
+    useState<RetirementCalculationResult | null>(null);
 
   // 현재 나이 입력값 처리
   const handleCurrentAgeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,82 +166,32 @@ export default function RetirementCalculator() {
 
   // 폼 제출 처리
   const onSubmit: SubmitHandler<FormInputs> = (data) => {
-    // 은퇴까지 남은 기간 (년)
-    const yearsToRetirement = retirementAge - currentAge;
-
-    // 은퇴 후 생존 기간 (년)
-    const retirementYears = lifeExpectancy - retirementAge;
-
-    // 은퇴 시점의 월 생활비 (물가상승률 반영)
-    const inflatedMonthlyExpenses =
-      monthlyExpenses * Math.pow(1 + inflation / 100, yearsToRetirement);
-
-    // 은퇴 기간 동안 필요한 총 자금 (실질 수익률 고려)
-    const realReturn = (annualReturn - inflation) / 100;
-
-    let totalNeeded;
-    if (realReturn === 0) {
-      // 실질 수익률이 0인 경우
-      totalNeeded = inflatedMonthlyExpenses * 12 * retirementYears;
-    } else {
-      // 실질 수익률이 0이 아닌 경우
-      totalNeeded =
-        (inflatedMonthlyExpenses *
-          12 *
-          (1 - Math.pow(1 + realReturn, -retirementYears))) /
-        realReturn;
-    }
-
-    // 현재 저축액의 은퇴 시점 가치
-    const futureSavingsValue =
-      currentSavings * Math.pow(1 + annualReturn / 100, yearsToRetirement);
-
-    // 추가로 필요한 저축액
-    const additionalSavingsNeeded = Math.max(
-      0,
-      totalNeeded - futureSavingsValue
-    );
-
-    // 은퇴까지 매월 저축해야 할 금액
-    let monthlySavingsNeeded;
-    if (annualReturn === 0) {
-      // 수익률이 0인 경우
-      monthlySavingsNeeded = additionalSavingsNeeded / (yearsToRetirement * 12);
-    } else {
-      // 수익률이 0이 아닌 경우
-      const monthlyRate = annualReturn / 100 / 12;
-      monthlySavingsNeeded =
-        additionalSavingsNeeded *
-        (monthlyRate / (Math.pow(1 + monthlyRate, yearsToRetirement * 12) - 1));
-    }
+    // 계산 유틸리티 함수 호출
+    const result = calculateRetirementFunds({
+      currentAge,
+      retirementAge,
+      lifeExpectancy,
+      currentSavings,
+      monthlyExpenses,
+      annualReturn,
+      inflation,
+    });
 
     // 결과 설정
-    setRequiredSavings(Math.round(totalNeeded));
-    setRequiredMonthlySavings(Math.round(monthlySavingsNeeded));
-    setRetirementFund(Math.round(totalNeeded));
-    setRealValueRetirementFund(
-      Math.round(totalNeeded / Math.pow(1 + inflation / 100, yearsToRetirement))
-    );
+    setCalculationResult(result);
   };
 
   // 총 적립금 계산 (은퇴까지 매월 저축액 * 개월 수)
-  const totalContribution =
-    requiredMonthlySavings !== null
-      ? requiredMonthlySavings * (retirementAge - currentAge) * 12
-      : 0;
+  const totalContribution = calculationResult?.requiredMonthlySavings
+    ? calculationResult.requiredMonthlySavings *
+      (retirementAge - currentAge) *
+      12
+    : 0;
 
   // 총 투자 수익 계산
   const totalProfit =
-    requiredSavings !== null &&
-    currentSavings !== null &&
-    totalContribution !== null
-      ? requiredSavings - currentSavings - totalContribution
-      : 0;
-
-  // 인플레이션으로 인한 구매력 감소
-  const inflationLoss =
-    requiredSavings !== null && realValueRetirementFund !== null
-      ? requiredSavings - realValueRetirementFund
+    calculationResult?.requiredSavings && currentSavings && totalContribution
+      ? calculationResult.requiredSavings - currentSavings - totalContribution
       : 0;
 
   return (
@@ -423,12 +372,12 @@ export default function RetirementCalculator() {
               </button>
             </form>
 
-            {requiredSavings !== null && requiredMonthlySavings !== null && (
+            {calculationResult && (
               <div className={styles.resultCard}>
                 <h2>은퇴 준비 정보</h2>
 
                 <div className={styles.resultValue}>
-                  {requiredMonthlySavings.toLocaleString()} 원
+                  {calculationResult.requiredMonthlySavings.toLocaleString()} 원
                 </div>
                 <div className={styles.resultLabel}>매월 저축해야 할 금액</div>
 
@@ -436,47 +385,21 @@ export default function RetirementCalculator() {
 
                 <ResultCard
                   title='필요한 총 은퇴 자금'
-                  result={requiredSavings}
+                  result={calculationResult.requiredSavings}
                   initialInvestment={currentSavings}
                   totalContribution={totalContribution}
                   totalProfit={totalProfit}
-                  realValueResult={realValueRetirementFund}
-                  inflationLoss={inflationLoss}
+                  realValueResult={calculationResult.realValueRetirementFund}
+                  inflationLoss={calculationResult.inflationLoss}
                 />
 
-                <div className={styles.retirementSummary}>
-                  <div className={styles.summaryRow}>
-                    <div className={styles.summaryLabel}>
-                      은퇴까지 남은 기간:
-                    </div>
-                    <div className={styles.summaryValue}>
-                      {retirementAge - currentAge}년
-                    </div>
-                  </div>
-                  <div className={styles.summaryRow}>
-                    <div className={styles.summaryLabel}>
-                      은퇴 후 예상 생존 기간:
-                    </div>
-                    <div className={styles.summaryValue}>
-                      {lifeExpectancy - retirementAge}년
-                    </div>
-                  </div>
-                  <div className={styles.summaryRow}>
-                    <div className={styles.summaryLabel}>
-                      은퇴 시점 월 생활비:
-                    </div>
-                    <div className={styles.summaryValue}>
-                      {Math.round(
-                        monthlyExpenses *
-                          Math.pow(
-                            1 + inflation / 100,
-                            retirementAge - currentAge
-                          )
-                      ).toLocaleString()}{' '}
-                      원
-                    </div>
-                  </div>
-                </div>
+                <RetirementSummary
+                  yearsToRetirement={retirementAge - currentAge}
+                  retirementYears={lifeExpectancy - retirementAge}
+                  inflatedMonthlyExpenses={
+                    calculationResult.inflatedMonthlyExpenses
+                  }
+                />
               </div>
             )}
           </div>
