@@ -53,11 +53,11 @@ export default function HomePage() {
       path: '/calculators/budget',
     },
     {
-      id: 'tax',
-      title: '세금 계산기',
-      description: '소득세 및 기타 세금을 계산합니다.',
-      icon: '/icons/document.svg',
-      path: '/calculators/tax',
+      id: 'investment-return',
+      title: '주식 물타기 계산기',
+      description: '추가 매수를 통한 평균 매수가 변화를 계산합니다.',
+      icon: '/icons/chart-line.svg',
+      path: '/calculators/investment-return',
     },
   ];
 
