@@ -1,13 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import styles from '../../page.module.css';
-import Header from '../../../components/Header';
-import FormattedInput from '../../../components/FormattedInput';
-import { formatNumber, removeCommas } from '../../../utils/formatters';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import styles from './page.module.css';
 
-// 폼 입력 타입 정의
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 type FormInputs = {
   currentAvgPrice: string;
   currentQuantity: string;
@@ -15,265 +31,257 @@ type FormInputs = {
   targetPrice: string;
 };
 
-export default function AveragingDownCalculator() {
-  // React Hook Form 설정
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<FormInputs>({
-    defaultValues: {
-      currentAvgPrice: '50,000',
-      currentQuantity: '100',
-      currentPrice: '40,000',
-      targetPrice: '45,000',
-    },
-    mode: 'onChange',
+type CalculationResult = {
+  requiredQuantity: number;
+  totalInvestment: number;
+  newAveragePrice: number;
+  priceReduction: number;
+};
+
+export default function InvestmentReturnCalculator() {
+  const [formData, setFormData] = useState<FormInputs>({
+    currentAvgPrice: '',
+    currentQuantity: '',
+    currentPrice: '',
+    targetPrice: '',
   });
+  const [result, setResult] = useState<CalculationResult | null>(null);
 
-  // 상태 관리
-  const [currentAvgPrice, setCurrentAvgPrice] = useState<number>(50000);
-  const [currentQuantity, setCurrentQuantity] = useState<number>(100);
-  const [currentPrice, setCurrentPrice] = useState<number>(40000);
-  const [targetPrice, setTargetPrice] = useState<number>(45000);
-  const [result, setResult] = useState<{
-    requiredQuantity: number;
-    totalInvestmentNeeded: number;
-    newAveragePrice: number;
-    totalQuantity: number;
-    totalInvestment: number;
-    priceReduction: number;
-  } | null>(null);
-
-  // 현재 평단가 입력값 포맷팅
   const handleCurrentAvgPriceChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const value = removeCommas(e.target.value);
-    const numericValue = value === '' ? 0 : parseInt(value, 10);
-    setCurrentAvgPrice(numericValue);
-    setValue('currentAvgPrice', formatNumber(numericValue));
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setFormData((prev) => ({ ...prev, currentAvgPrice: value }));
   };
 
-  // 현재 보유 수량 입력값 포맷팅
   const handleCurrentQuantityChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const value = e.target.value;
-    const numericValue = value === '' ? 0 : parseInt(value, 10);
-    setCurrentQuantity(numericValue);
-    setValue('currentQuantity', value);
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setFormData((prev) => ({ ...prev, currentQuantity: value }));
   };
 
-  // 현재 주가 입력값 포맷팅
   const handleCurrentPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = removeCommas(e.target.value);
-    const numericValue = value === '' ? 0 : parseInt(value, 10);
-    setCurrentPrice(numericValue);
-    setValue('currentPrice', formatNumber(numericValue));
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setFormData((prev) => ({ ...prev, currentPrice: value }));
   };
 
-  // 목표 평단가 입력값 포맷팅
   const handleTargetPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = removeCommas(e.target.value);
-    const numericValue = value === '' ? 0 : parseInt(value, 10);
-    setTargetPrice(numericValue);
-    setValue('targetPrice', formatNumber(numericValue));
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setFormData((prev) => ({ ...prev, targetPrice: value }));
   };
 
-  // 폼 제출 처리
-  const onSubmit: SubmitHandler<FormInputs> = (data) => {
-    // 현재 총 투자금액
-    const currentTotalInvestment = currentAvgPrice * currentQuantity;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const currentAvgPrice = Number(formData.currentAvgPrice);
+    const currentQuantity = Number(formData.currentQuantity);
+    const currentPrice = Number(formData.currentPrice);
+    const targetPrice = Number(formData.targetPrice);
 
-    // 목표 평단가를 달성하기 위한 추가 매수 수량 계산
-    // (현재_평단가 * 현재_수량 - 목표_평단가 * 현재_수량) / (목표_평단가 - 현재_주가)
-    const requiredQuantity = Math.ceil(
+    if (
+      isNaN(currentAvgPrice) ||
+      isNaN(currentQuantity) ||
+      isNaN(currentPrice) ||
+      isNaN(targetPrice)
+    ) {
+      alert('모든 필드를 입력해주세요.');
+      return;
+    }
+
+    const requiredQuantity =
       (currentAvgPrice * currentQuantity - targetPrice * currentQuantity) /
-        (targetPrice - currentPrice)
-    );
+      (targetPrice - currentPrice);
 
-    // 추가 필요 투자금액
-    const totalInvestmentNeeded = requiredQuantity * currentPrice;
-
-    // 총 수량
-    const totalQuantity = currentQuantity + requiredQuantity;
-
-    // 총 투자금액
-    const totalInvestment = currentTotalInvestment + totalInvestmentNeeded;
-
-    // 새로운 평균 매수가
-    const newAveragePrice = totalInvestment / totalQuantity;
-
-    // 평단가 감소율
+    const totalInvestment = requiredQuantity * currentPrice;
+    const newAveragePrice =
+      (currentAvgPrice * currentQuantity + totalInvestment) /
+      (currentQuantity + requiredQuantity);
     const priceReduction =
       ((currentAvgPrice - newAveragePrice) / currentAvgPrice) * 100;
 
     setResult({
       requiredQuantity,
-      totalInvestmentNeeded,
-      newAveragePrice,
-      totalQuantity,
       totalInvestment,
+      newAveragePrice,
       priceReduction,
     });
   };
 
   return (
     <>
-      <Header />
       <div className={styles.page}>
         <main className={styles.main}>
           <div className={styles.container}>
             <div className={styles.header}>
               <h1 className={styles.title}>주식 물타기 계산기</h1>
               <p className={styles.subtitle}>
-                목표 평단가 달성을 위한 추가 매수 수량을 계산해보세요
+                추가 매수를 통한 평균 매수가 변화를 계산합니다
               </p>
             </div>
 
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className={styles.calculatorCard}>
-              <div className={styles.inputGroup}>
-                <h3 className={styles.inputGroupTitle}>현재 상태</h3>
-                <FormattedInput
-                  id='currentAvgPrice'
-                  label='현재 평균 단가 (원)'
-                  numericValue={currentAvgPrice}
-                  onChange={handleCurrentAvgPriceChange}
-                  register={register}
-                  name='currentAvgPrice'
-                  validation={{
-                    required: '현재 평균 단가를 입력해주세요',
-                    validate: (value) =>
-                      removeCommas(value) !== '0' ||
-                      '0보다 큰 금액을 입력해주세요',
-                  }}
-                  error={errors.currentAvgPrice}
-                  min='0'
-                />
-
-                <FormattedInput
-                  id='currentQuantity'
-                  label='현재 보유 수량 (주)'
-                  numericValue={currentQuantity}
-                  onChange={handleCurrentQuantityChange}
-                  register={register}
-                  name='currentQuantity'
-                  validation={{
-                    required: '현재 보유 수량을 입력해주세요',
-                    validate: (value) =>
-                      Number(value) > 0 || '0보다 큰 수량을 입력해주세요',
-                  }}
-                  error={errors.currentQuantity}
-                  min='1'
-                  showKorean={false}
-                />
-
-                <FormattedInput
-                  id='currentPrice'
-                  label='현재 주가 (원)'
-                  numericValue={currentPrice}
-                  onChange={handleCurrentPriceChange}
-                  register={register}
-                  name='currentPrice'
-                  validation={{
-                    required: '현재 주가를 입력해주세요',
-                    validate: (value) =>
-                      removeCommas(value) !== '0' ||
-                      '0보다 큰 금액을 입력해주세요',
-                  }}
-                  error={errors.currentPrice}
-                  min='0'
-                />
-
-                <FormattedInput
-                  id='targetPrice'
-                  label='목표 평단가 (원)'
-                  numericValue={targetPrice}
-                  onChange={handleTargetPriceChange}
-                  register={register}
-                  name='targetPrice'
-                  validation={{
-                    required: '목표 평단가를 입력해주세요',
-                    validate: {
-                      positive: (value) =>
-                        removeCommas(value) !== '0' ||
-                        '0보다 큰 금액을 입력해주세요',
-                      lessThanCurrent: (value) =>
-                        Number(removeCommas(value)) < currentAvgPrice ||
-                        '목표 평단가는 현재 평단가보다 작아야 합니다',
-                      moreThanMarket: (value) =>
-                        Number(removeCommas(value)) > currentPrice ||
-                        '목표 평단가는 현재 주가보다 커야 합니다',
-                    },
-                  }}
-                  error={errors.targetPrice}
-                  min='0'
-                />
-              </div>
-
-              <button type='submit' className={styles.calculateButton}>
-                계산하기
-              </button>
-            </form>
-
-            {result !== null && (
-              <div className={styles.resultCard}>
-                <h2>물타기 전략</h2>
-                <div className={styles.resultSummary}>
-                  <div className={styles.summaryItem}>
-                    <div className={styles.summaryValue}>
-                      {result.requiredQuantity.toLocaleString()} 주
-                    </div>
-                    <div className={styles.summaryLabel}>필요 매수 수량</div>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <div className={styles.summaryValue}>
-                      {result.totalInvestmentNeeded.toLocaleString()} 원
-                    </div>
-                    <div className={styles.summaryLabel}>필요 투자금액</div>
-                  </div>
+            <div className={styles.calculatorCard}>
+              <form onSubmit={handleSubmit} className={styles.form}>
+                <div className={styles.inputGroup}>
+                  <label htmlFor='currentAvgPrice'>현재 평균 매수가</label>
+                  <input
+                    type='text'
+                    id='currentAvgPrice'
+                    value={formData.currentAvgPrice}
+                    onChange={handleCurrentAvgPriceChange}
+                    placeholder='예: 100000'
+                  />
                 </div>
 
-                <div className={styles.resultDivider}></div>
-
-                <div className={styles.resultSummary}>
-                  <div className={styles.summaryItem}>
-                    <div className={styles.summaryValue}>
-                      {Math.round(result.newAveragePrice).toLocaleString()} 원
-                    </div>
-                    <div className={styles.summaryLabel}>예상 평균 단가</div>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <div className={styles.summaryValue}>
-                      {result.priceReduction.toFixed(2)}%
-                    </div>
-                    <div className={styles.summaryLabel}>평단가 감소율</div>
-                  </div>
+                <div className={styles.inputGroup}>
+                  <label htmlFor='currentQuantity'>현재 보유 수량</label>
+                  <input
+                    type='text'
+                    id='currentQuantity'
+                    value={formData.currentQuantity}
+                    onChange={handleCurrentQuantityChange}
+                    placeholder='예: 100'
+                  />
                 </div>
 
-                <div className={styles.resultDivider}></div>
+                <div className={styles.inputGroup}>
+                  <label htmlFor='currentPrice'>현재 주가</label>
+                  <input
+                    type='text'
+                    id='currentPrice'
+                    value={formData.currentPrice}
+                    onChange={handleCurrentPriceChange}
+                    placeholder='예: 80000'
+                  />
+                </div>
 
-                <div className={styles.resultSummary}>
-                  <div className={styles.summaryItem}>
-                    <div className={styles.summaryValue}>
-                      {result.totalQuantity.toLocaleString()} 주
+                <div className={styles.inputGroup}>
+                  <label htmlFor='targetPrice'>목표 평균 매수가</label>
+                  <input
+                    type='text'
+                    id='targetPrice'
+                    value={formData.targetPrice}
+                    onChange={handleTargetPriceChange}
+                    placeholder='예: 90000'
+                  />
+                </div>
+
+                <button type='submit' className={styles.submitButton}>
+                  계산하기
+                </button>
+              </form>
+
+              {result !== null && (
+                <div className={styles.resultCard}>
+                  <h2>계산 결과</h2>
+                  <div className={styles.resultSummary}>
+                    <div className={styles.summaryItem}>
+                      <div className={styles.summaryValue}>
+                        {Math.round(result.requiredQuantity).toLocaleString()}{' '}
+                        주
+                      </div>
+                      <div className={styles.summaryLabel}>
+                        추가 매수 필요 수량
+                      </div>
                     </div>
-                    <div className={styles.summaryLabel}>총 보유 수량</div>
+
+                    <div className={styles.summaryItem}>
+                      <div className={styles.summaryValue}>
+                        {Math.round(result.priceReduction).toFixed(2)}%
+                      </div>
+                      <div className={styles.summaryLabel}>
+                        평균 매수가 감소율
+                      </div>
+                    </div>
+
+                    <div className={styles.summaryItem}>
+                      <div className={styles.summaryValue}>
+                        {Math.round(result.newAveragePrice).toLocaleString()} 원
+                      </div>
+                      <div className={styles.summaryLabel}>
+                        예상 평균 매수가
+                      </div>
+                    </div>
                   </div>
-                  <div className={styles.summaryItem}>
-                    <div className={styles.summaryValue}>
-                      {result.totalInvestment.toLocaleString()} 원
+
+                  <div className={styles.resultDivider}></div>
+
+                  <div className={styles.resultSummary}>
+                    <div className={styles.summaryItem}>
+                      <div className={styles.summaryValue}>
+                        {result.totalInvestment.toLocaleString()} 원
+                      </div>
+                      <div className={styles.summaryLabel}>총 투자금액</div>
                     </div>
-                    <div className={styles.summaryLabel}>총 투자금액</div>
+                  </div>
+
+                  <div className={styles.resultDivider}></div>
+
+                  <div className={styles.chartContainer}>
+                    <h2>매수 현황 비교</h2>
+                    <div className={styles.chart}>
+                      <Line
+                        data={{
+                          labels: ['현재', '추가 매수 후'],
+                          datasets: [
+                            {
+                              label: '평균 매수가',
+                              data: [
+                                Number(formData.currentAvgPrice),
+                                result.newAveragePrice,
+                              ],
+                              borderColor: 'rgb(59, 130, 246)',
+                              backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                              yAxisID: 'y',
+                            },
+                            {
+                              label: '총 투자금액',
+                              data: [
+                                Number(formData.currentAvgPrice) *
+                                  Number(formData.currentQuantity),
+                                result.totalInvestment,
+                              ],
+                              borderColor: 'rgb(16, 185, 129)',
+                              backgroundColor: 'rgba(16, 185, 129, 0.5)',
+                              yAxisID: 'y1',
+                            },
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          interaction: {
+                            mode: 'index' as const,
+                            intersect: false,
+                          },
+                          scales: {
+                            y: {
+                              type: 'linear' as const,
+                              display: true,
+                              position: 'left' as const,
+                              title: {
+                                display: true,
+                                text: '평균 매수가 (원)',
+                              },
+                            },
+                            y1: {
+                              type: 'linear' as const,
+                              display: true,
+                              position: 'right' as const,
+                              title: {
+                                display: true,
+                                text: '총 투자금액 (원)',
+                              },
+                              grid: {
+                                drawOnChartArea: false,
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </main>
       </div>
