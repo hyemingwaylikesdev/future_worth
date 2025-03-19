@@ -13,6 +13,8 @@ import {
   Legend,
 } from 'chart.js';
 import styles from './page.module.css';
+import Header from '../../../../src/components/Header';
+import Head from 'next/head';
 
 ChartJS.register(
   CategoryScale,
@@ -109,6 +111,24 @@ export default function InvestmentReturnCalculator() {
 
   return (
     <>
+      <Head>
+        <title>주식 물타기 계산기 | Future Worth</title>
+        <meta
+          name='description'
+          content='주식 물타기를 통한 평균 매수가 변화와 필요한 투자금액을 계산해보세요. 현재 평균 매수가, 보유 수량, 현재 주가를 입력하여 목표 평균 매수가까지 도달하기 위한 추가 매수 수량을 계산합니다.'
+        />
+        <meta
+          name='keywords'
+          content='주식 물타기, 평균 매수가 계산, 주식 투자 계산기, 주식 매수 계산기'
+        />
+        <meta property='og:title' content='주식 물타기 계산기 | Future Worth' />
+        <meta
+          property='og:description'
+          content='주식 물타기를 통한 평균 매수가 변화와 필요한 투자금액을 계산해보세요.'
+        />
+        <meta property='og:type' content='website' />
+      </Head>
+      <Header />
       <div className={styles.page}>
         <main className={styles.main}>
           <div className={styles.container}>
