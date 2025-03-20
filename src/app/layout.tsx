@@ -1,8 +1,14 @@
-import type { Metadata } from 'next';
+import { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const metadata: Metadata = {
   title: '금융 계산기 모음 | Future Worth',
@@ -20,11 +26,6 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
   },
 };
 
