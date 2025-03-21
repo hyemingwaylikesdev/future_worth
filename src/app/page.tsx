@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import styles from './page.module.css';
 import Header from '../components/Header';
+import AdComponent from '../components/AdComponent';
 
 interface CalculatorCard {
   id: string;
@@ -68,11 +69,17 @@ export default function HomePage() {
         <main className={styles.main}>
           <div className={styles.container}>
             <div className={styles.header}>
-              <h1 className={styles.title}>금융 계산기 모음</h1>
+              <h1 className={styles.title}>미래자산 계산기</h1>
               <p className={styles.subtitle}>
-                다양한 금융 계산기를 이용하여 재무 계획을 세워보세요
+                투자, 대출, 연금 계산을 한번에 해보세요
               </p>
             </div>
+
+            <AdComponent
+              slot='YOUR-AD-SLOT-ID'
+              format='horizontal'
+              style={{ marginBottom: '2rem' }}
+            />
 
             <div className={styles.calculatorGrid}>
               {calculators.map((calc) => (
