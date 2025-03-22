@@ -1,18 +1,19 @@
 .page {
   min-height: 100vh;
   background-color: #f9fafb;
-  padding: 2rem 0;
+  padding: 2rem 1rem;
 }
 
 .main {
-  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
 }
 
 .container {
-  width: 100%;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
 }
 
 .header {
@@ -28,17 +29,8 @@
 }
 
 .subtitle {
-  font-size: 1rem;
+  font-size: 1.125rem;
   color: #6b7280;
-}
-
-.calculatorCard {
-  background-color: white;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  padding: 2rem;
-  margin-bottom: 2rem;
 }
 
 .form {
@@ -54,7 +46,6 @@
 }
 
 .inputGroup label {
-  font-size: 0.875rem;
   font-weight: 500;
   color: #374151;
 }
@@ -73,7 +64,16 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.submitButton {
+.inputGroup input.error {
+  border-color: #ef4444;
+}
+
+.errorMessage {
+  color: #ef4444;
+  font-size: 0.875rem;
+}
+
+.button {
   background-color: #3b82f6;
   color: white;
   padding: 0.75rem 1.5rem;
@@ -85,70 +85,55 @@
   transition: background-color 0.2s;
 }
 
-.submitButton:hover {
+.button:hover {
   background-color: #2563eb;
 }
 
-.resultCard {
+.result {
   margin-top: 2rem;
   padding-top: 2rem;
   border-top: 1px solid #e5e7eb;
 }
 
-.resultCard h2 {
+.result h2 {
   font-size: 1.5rem;
   font-weight: 600;
   color: #1f2937;
   margin-bottom: 1.5rem;
+  text-align: center;
 }
 
-.resultSummary {
+.resultGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.summaryItem {
+.resultCard {
   background-color: #f3f4f6;
-  padding: 1rem;
+  padding: 1.5rem;
   border-radius: 0.5rem;
   text-align: center;
 }
 
-.summaryValue {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
+.resultCard h3 {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6b7280;
   margin-bottom: 0.5rem;
 }
 
-.summaryLabel {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.resultDivider {
-  height: 1px;
-  background-color: #e5e7eb;
-  margin: 1.5rem 0;
+.resultCard p {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 .chartContainer {
   margin-top: 2rem;
-}
-
-.chartContainer h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 1rem;
-}
-
-.chart {
-  background-color: white;
   padding: 1rem;
+  background-color: white;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  height: 300px;
 }
